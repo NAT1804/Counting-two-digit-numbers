@@ -1,1 +1,2 @@
-# Counting-two-digit-numbers
+# Counting two-digit numbers
+### Đây là một dự án viết lại module trong web-site [dragonlearn.in](https://dragonlearn.in/). Cụ thể là phần bài tập của học sinh lớp 2 phần Operation > Adding and subtracting up to 100 without regrouping > Counting two-digit numbers > Rearrange the numbers to solve the equations ([Link tại đây](https://dragonlearn.in/teachers/g/61435/subjects/1/course_programs/2/cards/55023)).
