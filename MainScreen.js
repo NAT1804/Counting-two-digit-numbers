@@ -25,6 +25,10 @@ var number2;
 var operator = ['+', '-'];
 var rdOperator;
 var correctAnswer;
+var inputBox;
+var inputNumber;
+var inputNumber2;
+var numbersOfInput;
 
 class MainScreen extends Phaser.Scene {
     constructor() {
@@ -32,6 +36,13 @@ class MainScreen extends Phaser.Scene {
     }
 
     preload() {
+        // load editor
+        var url;
+        url = 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexbbcodetextplugin.min.js';
+        this.load.plugin('rexbbcodetextplugin', url, true);
+      
+        url = 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rextexteditplugin.min.js';
+        this.load.plugin('rextexteditplugin', url, true);
 
         // load font 
         this.plugins.get('rexwebfontloaderplugin').addToScene(this);
@@ -51,9 +62,11 @@ class MainScreen extends Phaser.Scene {
             frameWidth: 432,
             frameHeight: 80
         });
+        this.load.image('inputBox', 'assets/images/inputBox.png');
     }
 
     create() {
+
         // box 
         this.box = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY-75, 'mainBox');
 
@@ -93,9 +106,21 @@ class MainScreen extends Phaser.Scene {
     
     }
 
+    textAreaChanged() {
+        var text = this.formUtil.getTextAreaValue("area51");
+        console.log(text);
+    }
+
     initial() {
+        // input number
+        inputNumber = this.add.text(0, 0, ' ');
+        inputNumber2 = this.add.text(0, 0, ' ');
+        numbersOfInput = 0;
+
+        //
         posYButton1 = 162;
         posYAnswer1 = 137;
+
         // question 
         rdOperator = Phaser.Math.Between(0, 1);
         if (rdOperator == 0) {
@@ -111,11 +136,16 @@ class MainScreen extends Phaser.Scene {
                 number2 = Phaser.Math.Between(10, 50);
             } while (number2 % 10 == 0 || (number1 - number2) <= 9);
         }
-        this.numberQuestion = this.add.text(config.width/2-107, config.height/8-20, number1 + ' ' + operator[rdOperator] + ' ' + number2 + ' = ?', {
+        this.numberQuestion = this.add.text(config.width/2-107, config.height/8-20, number1 + ' ' + operator[rdOperator] + ' ' + number2 + ' = ', {
                     fontFamily: 'PT Sans',
                     fontSize: '45px',
                     color: '#000000'
-                });
+        });
+        this.questionMark = this.add.text(config.width/2 + 87, config.height/8-20, '?', {
+            fontFamily: 'PT Sans',
+            fontSize: '45px',
+            color: '#000000'
+        });
 
         // answer correct
         if (rdOperator == 0) correctAnswer = number1 + number2;
@@ -147,7 +177,7 @@ class MainScreen extends Phaser.Scene {
                     fontSize: '45px',
                     color: '#000000'
                 });
-                arrayAnswer[i] = (number1-number1%10-number2+number2%10) + number1%10 + number2%10;
+                arrayAnswer[i] = (number1-number1%10-number2+number2%10) + number1%10 - number2%10;
             }
             
         }
@@ -168,17 +198,27 @@ class MainScreen extends Phaser.Scene {
         
     }
 
-    clear(index) {
+    clearSceneFirst(index) {
         this.textQuestion.destroy();
+        this.questionMark.destroy();
         for (let i=0; i<numberButtons; ++i) {
             arrayButton[i].destroy();
             if (i != index) {
                 arrayTextAnswer[i].destroy();
             }
         }
+        
     }
 
-    checkAnswer(index) {
+    clearSceneSecond(index) {
+        this.numberQuestion.destroy();
+        inputBox.destroy();
+        inputNumber.destroy();
+        inputNumber2.destroy();
+        arrayTextAnswer[index].destroy();
+    }
+
+    checkButtonAnswer(index) {
         if (arrayAnswer[index] === correctAnswer) {
             console.log('arryAnswer = '+arrayAnswer[index]);
             console.log('correctAnswer = '+correctAnswer);
@@ -192,15 +232,14 @@ class MainScreen extends Phaser.Scene {
     }
 
     printStatus(index) {
-        if (this.checkAnswer(index)) {
+        if (this.checkButtonAnswer(index)) {
             arrayButton[index].setFrame(3);
             this.time.addEvent({
                 delay: 1500,
                 callback: () => {
                     arrayButton[index].setFrame(0);
-                    this.clear(index);
+                    this.clearSceneFirst(index);
                     this.textMove(index);
-                    //this.initial();
                 },
                 loop: false
             });
@@ -218,9 +257,85 @@ class MainScreen extends Phaser.Scene {
 
     textMove(index){
         this.numberQuestion.x -= 130;
-        arrayTextAnswer[index].x += 50;
+        arrayTextAnswer[index].x += 45;
         arrayTextAnswer[index].y -= 150 + index*90;
         arrayTextAnswer[index].text += " = ";
+        
+        inputBox = this.add.image(config.width/2+180, config.height/8-27, 'inputBox').setOrigin(0, 0);
+        
+        this.input.keyboard.on('keydown', function (event) {
+            if (event.key == 1 || event.key == 2 || event.key == 3 || event.key == 4 || event.key == 5 ||
+                event.key == 6 || event.key == 7 || event.key == 8 || event.key == 9 || event.key == 0)
+            {
+                if (numbersOfInput == 0) {
+                    if (event.key == Math.floor(correctAnswer/10)) {
+                        console.log(Math.floor(correctAnswer/10));
+                        inputNumber.destroy();
+                        inputNumber = this.add.text(config.width/2+195, config.height/8-18, Math.floor(correctAnswer/10), {
+                            fontFamily: 'PT Sans',
+                            color: '#000000',
+                            fontSize: '45px',
+                        });
+                        numbersOfInput ++;
+                    } else {
+                        console.log(event.key);
+                        inputNumber.destroy();
+                        inputNumber = this.add.text(config.width/2+195, config.height/8-18, event.key, {
+                            fontFamily: 'PT Sans',
+                            color: 'red',
+                            fontSize: '45px',
+                        });
+                        
+                    }
+                } else {
+                    if (event.key == correctAnswer%10) {
+                        console.log(correctAnswer%10);
+                        inputNumber.destroy();
+                        inputNumber2.destroy();
+                        inputNumber = this.add.text(config.width/2+195, config.height/8-18, Math.floor(correctAnswer/10) + ' ' + correctAnswer%10, {
+                            fontFamily: 'PT Sans',
+                            color: '#000000',
+                            fontSize: '45px',
+                        });  
+                       
+                        this.time.addEvent({
+                            delay: 1500,
+                            callback: () => {
+                                this.clearSceneSecond(index);
+                                this.initial();
+                            }
+                        })
+                         
+                    } else {
+                        console.log(event.key);
+                        inputNumber.destroy();
+                        inputNumber2.destroy();
+                        inputNumber2 = this.add.text(config.width/2+195, config.height/8-18, Math.floor(correctAnswer/10), {
+                            fontFamily: 'PT Sans',
+                            color: '#000000',
+                            fontSize: '45px',
+                        });
+                        inputNumber = this.add.text(config.width/2+228, config.height/8-18,  event.key, {
+                            fontFamily: 'PT Sans',
+                            color: 'red',
+                            fontSize: '45px',
+                        });
+                    }
+                }
+                
+            } else {
+                console.log('Input a number!!!');
+            }
+            
+        }, this);
+        
+        
+        
+        
+    }
+
+    inputAnswer(event) {
+
     }
 
     update() {
